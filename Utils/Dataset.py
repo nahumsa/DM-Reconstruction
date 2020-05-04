@@ -11,9 +11,9 @@ def create_dataset(n_samples):
   n_samples(int): Number of samples
   
   Output:
-  states_train(list): States associated with each set of measurements.
-  measurements_train(list):
-  labels_train(list):
+  _states(list): States associated with each set of measurements.
+  _measurements(list): Measurements.
+  _labels(list): Label associated with each set of measurements.
   """
 
   _states = []
@@ -95,3 +95,86 @@ def create_x_local(measurement):
         aux.append(result)        
     X.append(aux)
   return X
+
+def generate_separable(n_samples):
+  """Create n_samples separable states.
+  
+  Parameters:
+  n_samples(int): Number of samples
+  
+  Output:
+  states_train(list): States associated with each set of measurements.
+  measurements_train(list):  measurements
+  """
+  _states = []  
+  _measurements = []
+
+  #Basis Measured
+  name_basis = ['I', 'X', 'Y', 'Z']
+  basis = [qutip.identity(2), qutip.sigmax(),qutip.sigmay(),qutip.sigmaz()]
+
+
+  counter = 0
+
+  while not counter == n_samples:    
+    density = qutip.rand_dm(4, density=0.75, dims=[[2,2],[2,2]])
+    
+    #Partial Transpose
+    density_partial_T = qutip.partial_transpose(density, [0,1])    
+  
+    #Labels: 1 if entangled 0 if separable (PPT Criterion)
+    if (density_partial_T.eigenenergies() < 0).any():      
+      pass
+  
+    else:      
+      _states.append(density)  
+  
+      val_measurements = measurement(density_matrix=density, 
+                                   base=basis, 
+                                   name_base=name_basis)
+  
+      _measurements.append(val_measurements)
+      
+      counter += 1
+
+  return _states, _measurements
+
+def generate_entangled(n_samples):
+  """Create n_samples entangled states.
+  
+  Parameters:
+  n_samples(int): Number of samples
+  
+  Output:
+  states_train(list): States associated with each set of measurements.
+  measurements_train(list):  measurements
+  """
+  _states = []  
+  _measurements = []
+
+  #Basis Measured
+  name_basis = ['I', 'X', 'Y', 'Z']
+  basis = [qutip.identity(2), qutip.sigmax(),qutip.sigmay(),qutip.sigmaz()]
+
+
+  counter = 0
+
+  while not counter == n_samples:    
+    density = qutip.rand_dm(4, density=0.75, dims=[[2,2],[2,2]])
+    
+    #Partial Transpose
+    density_partial_T = qutip.partial_transpose(density, [0,1])    
+  
+    #Labels: 1 if entangled 0 if separable (PPT Criterion)
+    if (density_partial_T.eigenenergies() < 0).any():      
+      _states.append(density)  
+  
+      val_measurements = measurement(density_matrix=density, 
+                                   base=basis, 
+                                   name_base=name_basis)
+  
+      _measurements.append(val_measurements)
+      
+      counter += 1            
+
+  return _states, _measurements
