@@ -81,3 +81,19 @@ def trace_loss(y_true,y_pred):
   d_y_true = create_2qubit_density_mat(y_true)  
   d_y_pred = create_2qubit_density_mat(y_pred)    
   return tf.reduce_mean(trace_dist(d_y_pred,d_y_true))
+
+def entropy(A):
+  vals_A = tf.linalg.eigvalsh(A)  
+  return - tf.math.real(tf.reduce_sum(vals_A*tf.math.log(vals_A),axis=-1))
+
+def relative_entropy(A,B):
+  vals_A = tf.linalg.eigvalsh(A)
+  vals_B = tf.linalg.eigvalsh(B)
+  return - entropy(B) - tf.math.real(tf.reduce_sum(vals_A*tf.math.log(vals_B),axis=-1)) 
+
+def r_entropy_loss(y_true,y_pred):
+  y_true = tf.cast(y_true, tf.dtypes.complex64, name='Casting_true')
+  y_pred = tf.cast(y_pred, tf.dtypes.complex64, name='Casting_pred')
+  d_y_true = create_2qubit_density_mat(y_true)  
+  d_y_pred = create_2qubit_density_mat(y_pred)  
+  return tf.reduce_mean(relative_entropy(d_y_pred,d_y_true))
