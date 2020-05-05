@@ -12,6 +12,8 @@ In the notebooks you will find the results for several methods for reconstructio
 
 - `Reconstruction DM.ipynb` : We used the [trace distance](https://en.wikipedia.org/wiki/Trace_distance) between the reconstructed density matrix and original density matrix.
 
+- `Reconstruction DM_entropy.ipynb` : We used the relative entropy between the reconstructed density matrix and original density matrix.
+
 ## Modules
 
 - Utils:
