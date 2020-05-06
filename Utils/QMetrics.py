@@ -82,19 +82,20 @@ def trace_loss(y_true,y_pred):
   d_y_pred = create_2qubit_density_mat(y_pred)    
   return tf.reduce_mean(trace_dist(d_y_pred,d_y_true))
 
-def entropy(A):
-  vals_A = tf.linalg.eigvalsh(A)  
-  return - tf.math.real(tf.reduce_sum(vals_A*tf.math.log(vals_A),axis=-1))
+def entropy(A):  
+  log_A = tf.linalg.logm(A)
+  eigen_AlogA = tf.linalg.eigvalsh(A*log_A)
+  return -tf.math.real(tf.reduce_sum(eigen_AlogA,axis=-1))
 
 def relative_entropy(A,B):
-  vals_A = tf.linalg.eigvalsh(A)
-  vals_B = tf.linalg.eigvalsh(B)
-  return - entropy(B) - tf.math.real(tf.reduce_sum(vals_A*tf.math.log(vals_B),axis=-1)) 
+  log_B = tf.linalg.logm(B)
+  eigen_AlogB = tf.linalg.eigvalsh(A*log_B)
+  return - entropy(B) - tf.math.real(tf.reduce_sum(eigen_AlogB,axis=-1)) 
 
 def q_cross_entropy(A,B):
-  vals_A = tf.linalg.eigvalsh(A)
-  vals_B = tf.linalg.eigvalsh(B)
-  return - tf.math.real(tf.reduce_sum(vals_A*tf.math.log(vals_B),axis=-1)) 
+  log_B = tf.linalg.logm(B)
+  eigen_AlogB = tf.linalg.eigvalsh(A*log_B)
+  return - tf.math.real(tf.reduce_sum(eigen_AlogB,axis=-1)) 
 
 def q_cross_loss(y_true, y_pred):
   y_true = tf.cast(y_true, tf.dtypes.complex64, name='Casting_true')
