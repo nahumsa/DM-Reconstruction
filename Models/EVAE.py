@@ -34,7 +34,7 @@ class EntropyVAE(TraceVAE):
     with tf.GradientTape() as tape:
       reconstructed = self(x)  # Compute input reconstruction.
       # Compute loss.      
-      loss = tf.math.abs(r_entropy_loss(x, reconstructed))
+      loss = r_entropy_loss(x, reconstructed)
       kl = sum(self.losses)
       loss = r_loss * loss + beta*kl  
     
@@ -72,7 +72,7 @@ class CrossEntropyVAE(TraceVAE):
     with tf.GradientTape() as tape:
       reconstructed = self(x)  # Compute input reconstruction.
       # Compute loss.      
-      loss = tf.math.abs(q_cross_loss(x, reconstructed))
+      loss = q_cross_loss(x, reconstructed)
       kl = sum(self.losses)
       loss = r_loss * loss + beta*kl  
     
