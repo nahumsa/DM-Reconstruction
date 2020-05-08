@@ -17,8 +17,8 @@ def tf_kron(a: tf.Tensor,
   (tf.tensor): Kronocker product between a and b.
 
   """
-  assert len(a.shape) == 2
-  assert len(b.shape) == 2
+  assert len(a.shape) == 2, "a, should be 2x2 tensor"
+  assert len(b.shape) == 2, "b, should be 2x2 tensor"
   a_shape = list(b.shape)    
   b_shape = list(b.shape)
   return tf.reshape(tf.reshape(a,[a_shape[0],1,a_shape[1],1])*tf.reshape(b,[1,b_shape[0],1,b_shape[1]]),[a_shape[0]*b_shape[0],a_shape[1]*b_shape[1]])
@@ -82,19 +82,18 @@ def trace_loss(y_true,y_pred):
   d_y_pred = create_2qubit_density_mat(y_pred)    
   return tf.reduce_mean(trace_dist(d_y_pred,d_y_true))
 
-def entropy(A):  
-  log_A = tf.linalg.logm(A)
-  eigen_AlogA = tf.linalg.eigvalsh(A*log_A)
-  return -tf.math.real(tf.reduce_sum(eigen_AlogA,axis=-1))
+def entropy(A):    
+  eigen_A = tf.linalg.eigvalsh(A)
+  return -tf.math.real(tf.reduce_sum(eigen_A*tf.math.log(eigen_A),axis=-1))
 
 def relative_entropy(A,B):
   log_B = tf.linalg.logm(B)
-  eigen_AlogB = tf.linalg.eigvalsh(A*log_B)
-  return - entropy(B) - tf.math.real(tf.reduce_sum(eigen_AlogB,axis=-1)) 
+  eigen_AlogB = tf.linalg.eigvalsh(tf.tensordot(A,log_B, axes=1))
+  return - entropy(A) - tf.math.real(tf.reduce_sum(eigen_AlogB,axis=-1)) 
 
 def q_cross_entropy(A,B):
   log_B = tf.linalg.logm(B)
-  eigen_AlogB = tf.linalg.eigvalsh(A*log_B)
+  eigen_AlogB = tf.linalg.eigvalsh(tf.tensordot(A,log_B, axes=1))
   return - tf.math.real(tf.reduce_sum(eigen_AlogB,axis=-1)) 
 
 def q_cross_loss(y_true, y_pred):
