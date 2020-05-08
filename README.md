@@ -25,3 +25,4 @@ In the notebooks you will find the results for several methods for reconstructio
 - Models:
     - `VAE_Keras.py` : Variational Autoencoder implementation on keras.
     - `TVAE.py` : Variational Autoencoder implementation using trace distance as a loss function.
+    - `EVAE.py` : Variational Autoencoder implementation using quantum entropy measurements as a loss function. (Not completed)
