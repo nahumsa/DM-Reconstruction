@@ -19,8 +19,8 @@ class Encoder(layers.Layer):
   """Maps Input to a triplet (z_mean, z_log_var, z)."""
 
   def __init__(self,
-               latent_dim=32,
-               intermediate_dim=64,
+               latent_dim,
+               intermediate_dim,
                dtype='float64',
                **kwargs):
     
@@ -51,7 +51,7 @@ class Decoder(layers.Layer):
 
   def __init__(self,
                original_dim,
-               intermediate_dim=64,               
+               intermediate_dim,               
                **kwargs):
     super(Decoder, self).__init__(**kwargs)
 
@@ -77,7 +77,7 @@ class TraceVAE(tf.keras.Model):
   def __init__(self,
                original_dim,
                intermediate_dim,
-               latent_dim,               
+               latent_dim,                
                **kwargs):
     
     super(TraceVAE, self).__init__(**kwargs)
@@ -85,6 +85,95 @@ class TraceVAE(tf.keras.Model):
     self.encoder = Encoder(latent_dim=latent_dim,
                            intermediate_dim=intermediate_dim)
     self.decoder = Decoder(original_dim, 
+                           intermediate_dim=intermediate_dim)    
+
+  def call(self, inputs):
+    z_mean, z_log_var, z = self.encoder(inputs)
+    reconstructed = self.decoder(z)
+    # Add KL divergence regularization loss.
+    kl_loss = - 0.5 * tf.reduce_mean(
+        z_log_var - tf.square(z_mean) - tf.exp(z_log_var) + 1)    
+    self.add_loss(kl_loss)
+    return reconstructed
+
+  def training_step(self, x, r_loss, beta):
+    """Training step for the VAE.
+  
+    Parameters
+    -------------------------------------------
+    x: Data
+    VAE(tf.keras.Model): Variational Autoencoder model. 
+    optimizer(tf.keras.optimizer): Optimizer used.  
+    r_loss(float): Parameter controlling reconstruction loss.
+    beta(float): Parameter controlling the KL divergence.
+
+    Return:
+    Loss(float): Loss value of the training step.
+
+    """
+    with tf.GradientTape() as tape:
+      reconstructed = self(x)#, training=True)  # Compute input reconstruction.
+      # Compute loss.
+      loss = trace_loss(x, reconstructed)
+      kl = sum(self.losses)
+      loss = r_loss * loss + beta*kl  
+    
+    # Update the weights of the VAE.
+    grads = tape.gradient(loss, self.trainable_weights)
+    self.optimizer.apply_gradients(zip(grads, self.trainable_weights))    
+    return loss
+
+  def training(self, dataset, 
+             epochs, r_loss, beta,              
+             Plotter=None):
+    """ Training of the Variational Autoencoder for a 
+    tensorflow.dataset.
+
+    Parameters
+    -------------------------------------------
+    dataset(tf.data.Dataset): Dataset of the data.
+    VAE(tf.keras.Model): Variational Autoencoder model.
+    epochs(int): Number of epochs.
+    r_loss(float): Parameter controlling reconstruction loss.
+    beta(float): Parameter controlling the KL divergence.  
+    Plotter(object): Plotter object to show how the training is
+                    going (Default=None).
+
+    """
+
+    losses = []
+    epochs = range(epochs)
+
+    for i in tqdm(epochs, desc='Epochs'):
+      losses_epochs = []
+      for step, x in enumerate(dataset):
+
+        loss = self.training_step(x, r_loss, beta)
+  
+        # Logging.
+        losses_epochs.append(float(loss))
+      losses.append(np.mean(losses_epochs))
+    
+      if Plotter != None:
+        Plotter.plot(losses)
+
+    return losses 
+
+class TraceVAE2(tf.keras.Model):
+  """Combines the encoder and decoder into an end-to-end model for training."""
+
+  def __init__(self,
+               original_dim,
+               intermediate_dim,
+               latent_dim, 
+               final_dim,              
+               **kwargs):
+    
+    super(TraceVAE2, self).__init__(**kwargs)
+    self.original_dim = original_dim
+    self.encoder = Encoder(latent_dim=latent_dim,
+                           intermediate_dim=intermediate_dim)
+    self.decoder = Decoder(final_dim, 
                            intermediate_dim=intermediate_dim)    
 
   def call(self, inputs):
