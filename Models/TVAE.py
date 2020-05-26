@@ -21,7 +21,7 @@ class Encoder(layers.Layer):
   def __init__(self,
                latent_dim,
                intermediate_dim,
-               dtype='float64',
+               dropout_rate,
                **kwargs):
     
     super(Encoder, self).__init__(**kwargs)
@@ -30,6 +30,9 @@ class Encoder(layers.Layer):
       self.dense_proj.append(layers.Dense(i,
                                           activation=tf.nn.relu))
     
+    self.dropout_rate = dropout_rate
+    if self.dropout_rate:
+      self.dropout = layers.Dropout(self.dropout_rate)
 
     self.dense_mean = layers.Dense(latent_dim)
     self.dense_log_var = layers.Dense(latent_dim)
@@ -40,7 +43,8 @@ class Encoder(layers.Layer):
     
     for lay in self.dense_proj[1:]:
       x = lay(x)
-    
+      if self.dropout_rate:
+        x = self.dropout(x)
     z_mean = self.dense_mean(x)
     z_log_var = self.dense_log_var(x)
     z = self.sampling((z_mean, z_log_var))
@@ -51,7 +55,8 @@ class Decoder(layers.Layer):
 
   def __init__(self,
                original_dim,
-               intermediate_dim,               
+               intermediate_dim,
+               dropout_rate=None,
                **kwargs):
     super(Decoder, self).__init__(**kwargs)
 
@@ -60,6 +65,10 @@ class Decoder(layers.Layer):
       self.dense_proj.append(layers.Dense(i,
                                           activation=tf.nn.relu))
     
+    self.dropout_rate = dropout_rate
+    if self.dropout_rate:
+      self.dropout = layers.Dropout(self.dropout_rate)
+
     self.dense_output = layers.Dense(original_dim)
 
   def call(self, inputs):
@@ -67,6 +76,8 @@ class Decoder(layers.Layer):
     
     for lay in self.dense_proj[1:]:
       x = lay(x)
+      if self.dropout_rate:
+        x = self.dropout(x)
 
     return self.dense_output(x)
 
@@ -77,14 +88,17 @@ class TraceVAE(tf.keras.Model):
   def __init__(self,
                original_dim,
                intermediate_dim,
-               latent_dim,                
+               latent_dim,
+               dropout_rate,       
                **kwargs):
     
     super(TraceVAE, self).__init__(**kwargs)
     self.original_dim = original_dim
-    self.encoder = Encoder(latent_dim=latent_dim,
+    self.encoder = Encoder(latent_dim=latent_dim, 
+                           dropout_rate=dropout_rate,
                            intermediate_dim=intermediate_dim)
     self.decoder = Decoder(original_dim, 
+                           dropout_rate=dropout_rate,
                            intermediate_dim=intermediate_dim)    
 
   def call(self, inputs):
