@@ -126,7 +126,7 @@ class TraceVAE(tf.keras.Model):
 
     """
     with tf.GradientTape() as tape:
-      reconstructed = self(x)#, training=True)  # Compute input reconstruction.
+      reconstructed = self(x)  # Compute input reconstruction.
       # Compute loss.
       loss = trace_loss(x, reconstructed)
       kl = sum(self.losses)
@@ -135,11 +135,33 @@ class TraceVAE(tf.keras.Model):
     # Update the weights of the VAE.
     grads = tape.gradient(loss, self.trainable_weights)
     self.optimizer.apply_gradients(zip(grads, self.trainable_weights))    
+    
+    return loss
+
+  def validating_step(self, x, r_loss, beta):
+    """Validation step for the VAE.
+  
+    Parameters
+    -------------------------------------------
+    x: Data    
+    r_loss(float): Parameter controlling reconstruction loss.
+    beta(float): Parameter controlling the KL divergence.
+
+    Return:
+    Loss(float): Loss value of the training step.
+
+    """
+    reconstructed = self(x)  # Compute input reconstruction.
+    # Compute loss.
+    loss = trace_loss(x, reconstructed)
+    kl = sum(self.losses)
+    loss = r_loss * loss + beta*kl
+
     return loss
 
   def training(self, dataset, 
              epochs, r_loss, beta,              
-             Plotter=None):
+             test= None ,Plotter=None):
     """ Training of the Variational Autoencoder for a 
     tensorflow.dataset.
 
@@ -156,10 +178,12 @@ class TraceVAE(tf.keras.Model):
     """
 
     losses = []
+    val_losses = []
     epochs = range(epochs)
 
     for i in tqdm(epochs, desc='Epochs'):
       losses_epochs = []
+      
       for step, x in enumerate(dataset):
 
         loss = self.training_step(x, r_loss, beta)
@@ -167,11 +191,26 @@ class TraceVAE(tf.keras.Model):
         # Logging.
         losses_epochs.append(float(loss))
       losses.append(np.mean(losses_epochs))
+      
+      if test:
+        val_losses_epochs = []
+        for step, x in enumerate(test):
+
+          val_loss = self.validating_step(x, r_loss, beta)
+    
+          # Logging.
+          val_losses_epochs.append(float(val_loss))
+        
+        val_losses.append(np.mean(val_losses_epochs))
     
       if Plotter != None:
-        Plotter.plot(losses)
+        if test:
+          Plotter.plot([losses,val_losses])
+        else:
+          Plotter.plot(losses)
+        
 
-    return losses 
+    return losses, val_losses
 
 class TraceVAE2(tf.keras.Model):
   """Combines the encoder and decoder into an end-to-end model for training."""
