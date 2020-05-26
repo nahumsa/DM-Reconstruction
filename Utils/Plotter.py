@@ -17,16 +17,36 @@ class PeriodicPlotter:
       plt.cla()
 
       if self.scale is None:
-        plt.plot(data)
-
+        if len(data) == 2:
+          plt.plot(data[0], label='Training')
+          plt.plot(data[1], label='Validation')
+          plt.legend()
+        else:
+          plt.plot(data)
+        
       elif self.scale == 'semilogx':
-        plt.semilogx(data)
+        if len(data) == 2:
+          plt.plot(data[0], label='Training')
+          plt.plot(data[1], label='Validation')
+          plt.legend()
+        else:
+          plt.plot(data)
 
       elif self.scale == 'semilogy':
-        plt.semilogy(data)
+        if len(data) == 2:
+          plt.plot(data[0], label='Training')
+          plt.plot(data[1], label='Validation')
+          plt.legend()
+        else:
+          plt.plot(data)
 
       elif self.scale == 'loglog':
-        plt.loglog(data)
+        if len(data) == 2:
+          plt.plot(data[0], label='Training')
+          plt.plot(data[1], label='Validation')
+          plt.legend()
+        else:
+          plt.plot(data)
       
       else:
         raise ValueError("unrecognized parameter scale {}".format(self.scale))
