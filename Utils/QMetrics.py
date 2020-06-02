@@ -107,5 +107,19 @@ def r_entropy_loss(y_true,y_pred):
   y_true = tf.cast(y_true, tf.dtypes.complex64, name='Casting_true')
   y_pred = tf.cast(y_pred, tf.dtypes.complex64, name='Casting_pred')
   d_y_true = create_2qubit_density_mat(y_true)  
-  d_y_pred = create_2qubit_density_mat(y_pred)  
+  d_y_pred = create_2qubit_density_mat(y_pred)
   return tf.reduce_mean(relative_entropy(d_y_pred,d_y_true))
+
+def fidelity(A,B):  
+  (eigenvalues_A, vector_A) = tf.linalg.eig(A)    
+  aux_fidelity = vector_A@tf.linalg.diag(tf.math.sqrt(eigenvalues_A))@tf.transpose(vector_A, perm=[0,2,1], conjugate=True)    
+  f_b = aux_fidelity@B@tf.transpose(aux_fidelity, perm=[0,2,1], conjugate=True)
+  (eigenvalues_F, vector_F) = tf.linalg.eig(f_b)  
+  return tf.math.real(tf.linalg.trace(vector_F@tf.linalg.diag(tf.math.sqrt(eigenvalues_F))@tf.transpose(vector_F, perm=[0,2,1], conjugate=True)))
+
+def fidelity_rho(y_true, y_pred):
+  y_true = tf.cast(y_true, tf.dtypes.complex64, name='Casting_true')
+  y_pred = tf.cast(y_pred, tf.dtypes.complex64, name='Casting_pred')
+  d_y_true = create_2qubit_density_mat(y_true)  
+  d_y_pred = create_2qubit_density_mat(y_pred)
+  return tf.reduce_mean(fidelity(d_y_pred,d_y_true))
