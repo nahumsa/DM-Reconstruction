@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
 from tqdm.notebook import tqdm
-from Utils.QMetrics import trace_loss
+from Utils.QMetrics import trace_loss, fidelity_rho
 
 class Sampling(layers.Layer):
   """Uses (z_mean, z_log_var) to sample z, the vector encoding a digit."""
@@ -136,7 +136,11 @@ class TraceVAE(tf.keras.Model):
     grads = tape.gradient(loss, self.trainable_weights)
     self.optimizer.apply_gradients(zip(grads, self.trainable_weights))    
     
-    return loss
+    fid = []
+    for val_1, val_2 in zip(x.numpy(), reconstructed.numpy()):
+      fid.append(fidelity_rho(val_1,val_2))    
+
+    return loss, np.mean(fid)
 
   def validating_step(self, x, r_loss, beta):
     """Validation step for the VAE.
@@ -155,9 +159,13 @@ class TraceVAE(tf.keras.Model):
     # Compute loss.
     loss = trace_loss(x, reconstructed)
     kl = sum(self.losses)
-    loss = r_loss * loss + beta*kl
+    loss = r_loss * loss + beta*kl    
+    
+    fid = []
+    for val_1, val_2 in zip(x.numpy(), reconstructed.numpy()):
+      fid.append(fidelity_rho(val_1,val_2))    
 
-    return loss
+    return loss, np.mean(fid)
 
   def training(self, dataset, 
              epochs, r_loss, beta,              
@@ -179,38 +187,47 @@ class TraceVAE(tf.keras.Model):
 
     losses = []
     val_losses = []
+    fidelities = []
+    val_fidelities = []
     epochs = range(epochs)
 
     for i in tqdm(epochs, desc='Epochs'):
       losses_epochs = []
-      
+      fidelity_epochs =[]
       for step, x in enumerate(dataset):
 
-        loss = self.training_step(x, r_loss, beta)
+        loss, fidelity = self.training_step(x, r_loss, beta)
   
         # Logging.
         losses_epochs.append(float(loss))
+        fidelity_epochs.append(float(fidelity))
+      
       losses.append(np.mean(losses_epochs))
+      fidelities.append(np.mean(fidelity_epochs))
       
       if test:
         val_losses_epochs = []
+        val_fidelity_epochs = []
+
         for step, x in enumerate(test):
 
-          val_loss = self.validating_step(x, r_loss, beta)
+          val_loss, val_fidelity = self.validating_step(x, r_loss, beta)
     
           # Logging.
           val_losses_epochs.append(float(val_loss))
+          val_fidelity_epochs.append(float(fidelity))
         
         val_losses.append(np.mean(val_losses_epochs))
-    
+        val_fidelities.append(np.mean(val_fidelity_epochs))
+
       if Plotter != None:
         if test:
-          Plotter.plot([losses,val_losses])
+          Plotter.plot([losses,val_losses])          
         else:
           Plotter.plot(losses)
         
 
-    return losses, val_losses
+    return losses, val_losses, fidelity, val_fidelity
 
 class TraceVAE2(tf.keras.Model):
   """Combines the encoder and decoder into an end-to-end model for training."""
