@@ -227,7 +227,7 @@ class TraceVAE(tf.keras.Model):
           Plotter.plot(losses)
         
 
-    return losses, val_losses, fidelity, val_fidelity
+    return losses, val_losses, fidelities, val_fidelities
 
 class TraceVAE2(tf.keras.Model):
   """Combines the encoder and decoder into an end-to-end model for training."""
