@@ -215,7 +215,7 @@ class TraceVAE(tf.keras.Model):
     
           # Logging.
           val_losses_epochs.append(float(val_loss))
-          val_fidelity_epochs.append(float(fidelity))
+          val_fidelity_epochs.append(float(val_fidelity))
         
         val_losses.append(np.mean(val_losses_epochs))
         val_fidelities.append(np.mean(val_fidelity_epochs))
