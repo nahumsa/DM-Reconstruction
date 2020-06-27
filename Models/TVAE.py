@@ -61,7 +61,7 @@ class Decoder(layers.Layer):
     super(Decoder, self).__init__(**kwargs)
 
     self.dense_proj = []
-    for i in intermediate_dim:
+    for i in reversed(intermediate_dim):
       self.dense_proj.append(layers.Dense(i,
                                           activation=tf.nn.relu))
     
