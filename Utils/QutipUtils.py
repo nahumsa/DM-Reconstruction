@@ -32,3 +32,21 @@ def DM_from_measurements(measurements, base, name_base):
           density_matrix += measurements[i-1]*qutip.tensor(basis_1,basis_2)
 
   return density_matrix
+
+def unitary(theta, phi, lbda):
+  """ Apply a unitary of the form:
+  U3(theta, phi, lambda) = [[np.cos(theta/2),-np.exp(1j*lbda)*np.sin(theta/2)],
+                            [np.exp(1j*phi)*np.sin(theta/2),np.exp(1j*(phi+lbda)*np.cos(theta/2))]]
+  
+  """
+  return np.array([[np.cos(theta/2),-np.exp(1j*lbda)*np.sin(theta/2)],[np.exp(1j*phi)*np.sin(theta/2),np.exp(1j*(phi+lbda)*np.cos(theta/2))]])
+
+def add_error(dm, theta, phi, lbda, qubit=1):
+  """Add error to a density matrix.
+  """
+  err = qutip.Qobj(unitary(theta,phi,lbda))
+  if qubit == 1:
+    err = qutip.tensor(qutip.identity(2),err)  
+  elif qubit == 2:
+    err = qutip.tensor(err,qutip.identity(2))  
+  return dm*err

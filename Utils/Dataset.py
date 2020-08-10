@@ -2,7 +2,7 @@ from itertools import product
 import qutip as qutip
 import numpy as np
 
-from Utils.QutipUtils import measurement
+from Utils.QutipUtils import measurement, add_error
 
 def create_dataset(n_samples):
   """Create dataset.
@@ -48,6 +48,47 @@ def create_dataset(n_samples):
     _measurements.append(val_measurements)
     
   return _states, _measurements, _labels
+
+def create_dataset_err(n_samples, theta=0., phi=0., lbda=0., qubit=1):
+  """Create dataset.
+  
+  Parameters:
+  n_samples(int): Number of samples.
+  theta(float): Parameter for the error.
+  phi(float): Parameter for the error.
+  lbda(float): Parameter for the error.
+  qubit(int): In which qubit you want to put the error.
+  
+  Output:
+  _measurements(list): Measurements.
+  _measurements_err(list): Measurements with error.
+  """
+  
+  _measurements = []
+  _measurements_err = []
+
+  #Basis Measured
+  name_basis = ['I', 'X', 'Y', 'Z']
+  basis = [qutip.identity(2), qutip.sigmax(),qutip.sigmay(),qutip.sigmaz()]
+
+
+
+  for _ in range(n_samples):    
+    density = qutip.rand_dm(4, density=0.75, dims=[[2,2],[2,2]])
+    density_err = add_error(density, theta, phi, lbda, qubit)    
+  
+    val_measurements = measurement(density_matrix=density, 
+                                   base=basis, 
+                                   name_base=name_basis)
+    
+    val_measurements_err = measurement(density_matrix=density_err,
+                                       base=basis,
+                                       name_base=name_basis)
+    
+    _measurements.append(val_measurements)
+    _measurements_err.append(val_measurements_err)
+    
+  return _measurements, _measurements_err
 
 #Unpacking the training data
 def create_x(measurement):
