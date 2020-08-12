@@ -45,8 +45,11 @@ def add_error(dm, theta, phi, lbda, qubit=1):
   """Add error to a density matrix.
   """
   err = qutip.Qobj(unitary(theta,phi,lbda))
+  
   if qubit == 1:
     err = qutip.tensor(qutip.identity(2),err)  
+  
   elif qubit == 2:
     err = qutip.tensor(err,qutip.identity(2))  
-  return dm*err
+  
+  return err.dag()*dm*err
