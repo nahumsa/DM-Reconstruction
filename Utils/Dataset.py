@@ -75,6 +75,9 @@ def create_dataset_err(n_samples, theta=0., phi=0., lbda=0., qubit=1):
 
   for _ in range(n_samples):    
     density = qutip.rand_dm(4, density=0.75, dims=[[2,2],[2,2]])
+    
+    theta = theta*np.random.randn()
+    
     density_err = add_error(density, theta, phi, lbda, qubit)    
   
     val_measurements = measurement(density_matrix=density, 
@@ -83,7 +86,7 @@ def create_dataset_err(n_samples, theta=0., phi=0., lbda=0., qubit=1):
     
     val_measurements_err = measurement(density_matrix=density_err,
                                        base=basis,
-                                       name_base=name_basis)
+                                       name_base=name_basis)        
     
     _measurements.append(val_measurements)
     _measurements_err.append(val_measurements_err)
