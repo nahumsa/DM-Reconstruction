@@ -136,9 +136,7 @@ class TraceVAE(tf.keras.Model):
     grads = tape.gradient(loss, self.trainable_weights)
     self.optimizer.apply_gradients(zip(grads, self.trainable_weights))    
     
-    fid = []
-    for val_1, val_2 in zip(x.numpy(), reconstructed.numpy()):
-      fid.append(fidelity_rho(val_1,val_2))    
+    fid = fidelity_rho(x, reconstructed)
 
     return loss, np.mean(fid)
 
@@ -161,9 +159,7 @@ class TraceVAE(tf.keras.Model):
     kl = sum(self.losses)
     loss = r_loss * loss + beta*kl    
     
-    fid = []
-    for val_1, val_2 in zip(x.numpy(), reconstructed.numpy()):
-      fid.append(fidelity_rho(val_1,val_2))    
+    fid = fidelity_rho(x, reconstructed)
 
     return loss, np.mean(fid)
 
