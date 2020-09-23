@@ -124,9 +124,7 @@ class TraceAutoEncoder(tf.keras.Model):
     grads = tape.gradient(loss, self.trainable_weights)
     self.optimizer.apply_gradients(zip(grads, self.trainable_weights))    
     
-    fid = []
-    for val_1, val_2 in zip(y.numpy(), reconstructed.numpy()):
-      fid.append(fidelity_rho(val_1,val_2))    
+    fid = fidelity_rho(x, reconstructed)
 
     return loss, np.mean(fid)
 
@@ -147,10 +145,8 @@ class TraceAutoEncoder(tf.keras.Model):
     reconstructed = self(x)  # Compute input reconstruction.
     # Compute loss.
     loss = trace_loss(y, reconstructed)    
-    
-    fid = []
-    for val_1, val_2 in zip(y.numpy(), reconstructed.numpy()):
-      fid.append(fidelity_rho(val_1,val_2))    
+
+    fid = fidelity_rho(x, reconstructed)    
 
     return loss, np.mean(fid)
 
